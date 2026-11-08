@@ -1,0 +1,83 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum MessageRole {
+  SYSTEM
+  USER
+  ASSISTANT
+  TOOL
+}
+
+model User {
+  id           String         @id @default(uuid()) @db.Uuid
+  email        String         @unique
+  displayName  String?
+  conversations Conversation[]
+
+  createdAt    DateTime       @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime       @updatedAt @db.Timestamptz(6)
+}
+
+model Agent {
+  id            String         @id @default(uuid()) @db.Uuid
+  name          String
+  description   String?
+  model         String
+  systemPrompt  String?
+  configuration Json?
+  isActive      Boolean        @default(true)
+
+  conversations Conversation[]
+
+  createdAt     DateTime       @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime       @updatedAt @db.Timestamptz(6)
+}
+
+model Conversation {
+  id        String    @id @default(uuid()) @db.Uuid
+  title     String?
+
+  userId    String    @db.Uuid
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  agentId   String?   @db.Uuid
+  agent     Agent?    @relation(fields: [agentId], references: [id], onDelete: SetNull)
+
+  messages  Message[]
+
+  createdAt DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @db.Timestamptz(6)
+
+  @@index([userId])
+  @@index([agentId])
+  @@index([createdAt])
+}
+
+model Message {
+  id             String         @id @default(uuid()) @db.Uuid
+
+  conversationId String         @db.Uuid
+  conversation   Conversation   @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  role           MessageRole
+  content        String
+  metadata       Json?
+  tokenCount     Int?
+
+  createdAt      DateTime       @default(now()) @db.Timestamptz(6)
+
+  @@index([conversationId, createdAt])
+}
+

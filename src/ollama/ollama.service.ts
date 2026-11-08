@@ -15,6 +15,11 @@ interface OllamaChatResponse {
   done: boolean;
 }
 
+export interface OllamaChatMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
+
 @Injectable()
 export class OllamaService {
   private readonly logger = new Logger(OllamaService.name);
@@ -33,7 +38,7 @@ export class OllamaService {
     );
   }
 
-  async chat(message: string): Promise<string> {
+  async chat(message: string | OllamaChatMessage[]): Promise<string> {
     const url = `${this.baseUrl}/api/chat`;
 
     try {
@@ -47,12 +52,15 @@ export class OllamaService {
         signal: AbortSignal.timeout(120000),
         body: JSON.stringify({
           model: this.model,
-          messages: [
-            {
-              role: 'user',
-              content: message,
-            },
-          ],
+          messages:
+            typeof message === 'string'
+              ? [
+                  {
+                    role: 'user',
+                    content: message,
+                  },
+                ]
+              : message,
           stream: false,
           keep_alive: '5m',
         }),

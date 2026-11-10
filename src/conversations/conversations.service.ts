@@ -1,5 +1,6 @@
 import {
   HttpException,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -9,6 +10,8 @@ import { OllamaChatMessage } from '../ollama/ollama.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { MessageRole } from '../generated/prisma/enums.js';
 import { CreateConversationDto } from './dto/create-conversation.dto.js';
+import { AuthenticatedUser } from '../auth/authenticated-user.interface.js';
+import { UserRole } from '../generated/prisma/enums.js';
 
 @Injectable()
 export class ConversationsService {
@@ -17,9 +20,9 @@ export class ConversationsService {
     private readonly ollamaService: OllamaService,
   ) {}
 
-  async createConversation(dto: CreateConversationDto) {
+  async createConversation(userId: string, dto: CreateConversationDto) {
     const user = await this.prisma.user.findUnique({
-      where: { id: dto.userId },
+      where: { id: userId },
       select: { id: true },
     });
 
@@ -41,7 +44,7 @@ export class ConversationsService {
     return this.prisma.conversation.create({
       data: {
         title: dto.title,
-        userId: dto.userId,
+        userId,
         agentId: dto.agentId,
       },
       include: {
@@ -53,7 +56,11 @@ export class ConversationsService {
     });
   }
 
-  async sendMessage(conversationId: string, content: string) {
+  async sendMessage(
+    conversationId: string,
+    content: string,
+    user: AuthenticatedUser,
+  ) {
     const conversation = await this.prisma.conversation.findUnique({
       where: { id: conversationId },
       include: {
@@ -64,6 +71,7 @@ export class ConversationsService {
     if (!conversation) {
       throw new NotFoundException('Conversation not found.');
     }
+    this.assertConversationAccess(conversation, user);
 
     let userMessage;
     try {
@@ -134,7 +142,10 @@ export class ConversationsService {
     }
   }
 
-  async getConversationHistory(conversationId: string) {
+  async getConversationHistory(
+    conversationId: string,
+    user: AuthenticatedUser,
+  ) {
     const conversation = await this.prisma.conversation.findUnique({
       where: { id: conversationId },
       include: {
@@ -147,6 +158,7 @@ export class ConversationsService {
     if (!conversation) {
       throw new NotFoundException('Conversation not found.');
     }
+    this.assertConversationAccess(conversation, user);
 
     return conversation;
   }
@@ -171,6 +183,17 @@ export class ConversationsService {
         },
       },
     });
+  }
+
+  private assertConversationAccess(
+    conversation: { userId: string },
+    user: AuthenticatedUser,
+  ): void {
+    if (user.role !== UserRole.ADMIN && conversation.userId !== user.id) {
+      throw new ForbiddenException(
+        'You do not have access to this conversation.',
+      );
+    }
   }
 
   private formatHistory(

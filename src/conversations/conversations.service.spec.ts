@@ -1,8 +1,19 @@
 import { describe, expect, it, vi } from 'vitest';
 import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException } from '@nestjs/common';
 import { ServiceUnavailableException } from '@nestjs/common';
 import { ConversationsService } from './conversations.service.js';
 import { MessageRole } from '../generated/prisma/enums.js';
+import { UserRole } from '../generated/prisma/enums.js';
+
+const currentUser = {
+  id: 'user-1',
+  email: 'user@example.com',
+  role: UserRole.USER,
+  firstName: 'Test',
+  lastName: 'User',
+  isActive: true,
+};
 
 function createPrismaMock() {
   const user = { findUnique: vi.fn() };
@@ -46,8 +57,7 @@ describe('ConversationsService', () => {
       ollama as never,
     );
 
-    const result = await service.createConversation({
-      userId: 'user-1',
+    const result = await service.createConversation('user-1', {
       title: 'Support',
     });
 
@@ -78,6 +88,7 @@ describe('ConversationsService', () => {
 
     prisma.conversation.findUnique.mockResolvedValue({
       id: 'conversation-1',
+      userId: 'user-1',
       agent: { systemPrompt: 'Be helpful.' },
     });
     prisma.conversation.update.mockResolvedValue({});
@@ -98,6 +109,7 @@ describe('ConversationsService', () => {
     const result = await service.sendMessage(
       'conversation-1',
       'What is my name?',
+      currentUser,
     );
 
     expect(prisma.message.create).toHaveBeenCalled();
@@ -118,6 +130,7 @@ describe('ConversationsService', () => {
     ];
     prisma.conversation.findUnique.mockResolvedValue({
       id: 'conversation-1',
+      userId: 'user-1',
       messages,
     });
     const service = new ConversationsService(
@@ -126,7 +139,7 @@ describe('ConversationsService', () => {
     );
 
     await expect(
-      service.getConversationHistory('conversation-1'),
+      service.getConversationHistory('conversation-1', currentUser),
     ).resolves.toMatchObject({ messages });
     expect(prisma.conversation.findUnique).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -146,8 +159,25 @@ describe('ConversationsService', () => {
     );
 
     await expect(
-      service.sendMessage('conversation-1', 'Hello'),
+      service.sendMessage('conversation-1', 'Hello', currentUser),
     ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('rejects access to another user conversation', async () => {
+    const prisma = createPrismaMock();
+    prisma.conversation.findUnique.mockResolvedValue({
+      id: 'conversation-1',
+      userId: 'another-user',
+      messages: [],
+    });
+    const service = new ConversationsService(
+      prisma as never,
+      {} as never,
+    );
+
+    await expect(
+      service.getConversationHistory('conversation-1', currentUser),
+    ).rejects.toBeInstanceOf(ForbiddenException);
   });
 
   it('removes the unfulfilled user message when Ollama is unavailable', async () => {
@@ -164,6 +194,7 @@ describe('ConversationsService', () => {
 
     prisma.conversation.findUnique.mockResolvedValue({
       id: 'conversation-1',
+      userId: 'user-1',
       agent: null,
     });
     prisma.conversation.update.mockResolvedValue({});
@@ -176,7 +207,7 @@ describe('ConversationsService', () => {
     );
 
     await expect(
-      service.sendMessage('conversation-1', 'Hello'),
+      service.sendMessage('conversation-1', 'Hello', currentUser),
     ).rejects.toBeInstanceOf(ServiceUnavailableException);
     expect(prisma.message.delete).toHaveBeenCalledWith({
       where: { id: 'message-1' },

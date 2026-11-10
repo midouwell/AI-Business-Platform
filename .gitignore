@@ -1,0 +1,23 @@
+# Dependencies
+**/node_modules/
+
+# Build output
+**/dist/
+**/build/
+**/coverage/
+
+# Environment variables
+**/.env
+**/.env.*
+!**/.env.example
+
+# Angular cache
+frontend/.angular/
+
+# Logs
+**/*.log
+
+# IDE and operating system
+.idea/
+.DS_Store
+Thumbs.db

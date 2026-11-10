@@ -1,0 +1,58 @@
+<main class="auth-page">
+  <section class="auth-card" aria-labelledby="login-title">
+    <a class="brand" routerLink="/login" aria-label="AI Business Platform home">
+      <span class="brand-mark" aria-hidden="true">A</span>
+      <span>AI Business Platform</span>
+    </a>
+    <p class="eyebrow">YOUR PRIVATE AI WORKSPACE</p>
+    <h1 id="login-title">Welcome back</h1>
+    <p class="intro">Sign in to continue your conversations.</p>
+
+    @if (errorMessage(); as error) {
+      <div class="form-alert" role="alert">{{ error }}</div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <label for="email">Email address</label>
+      <input
+        id="email"
+        type="email"
+        autocomplete="email"
+        formControlName="email"
+        placeholder="you@company.com"
+        [attr.aria-invalid]="form.controls.email.touched && form.controls.email.invalid"
+        [attr.aria-describedby]="
+          form.controls.email.touched && form.controls.email.invalid ? 'email-error' : null
+        "
+      />
+      @if (form.controls.email.touched && form.controls.email.invalid) {
+        <span class="field-error" id="email-error">Enter a valid email address.</span>
+      }
+
+      <label for="password">Password</label>
+      <input
+        id="password"
+        type="password"
+        autocomplete="current-password"
+        formControlName="password"
+        placeholder="Enter your password"
+        [attr.aria-invalid]="form.controls.password.touched && form.controls.password.invalid"
+        [attr.aria-describedby]="
+          form.controls.password.touched && form.controls.password.invalid ? 'password-error' : null
+        "
+      />
+      @if (form.controls.password.touched && form.controls.password.invalid) {
+        <span class="field-error" id="password-error">Enter your password.</span>
+      }
+
+      <button class="primary-button submit-button" type="submit" [disabled]="isSubmitting()">
+        {{ isSubmitting() ? 'Signing in…' : 'Sign in' }}
+      </button>
+    </form>
+
+    <p class="auth-switch">New here? <a routerLink="/register">Create an account</a></p>
+    <p class="local-note">
+      <span aria-hidden="true">◈</span> Your AI runs on your private infrastructure.
+    </p>
+  </section>
+</main>

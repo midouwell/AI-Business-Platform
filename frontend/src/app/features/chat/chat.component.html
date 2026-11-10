@@ -1,0 +1,95 @@
+<section class="chat-page" aria-label="Conversation">
+  @if (isLoading()) {
+    <div class="state-message" role="status">Loading conversation…</div>
+  } @else if (conversation(); as current) {
+    <header class="chat-header">
+      <div>
+        <p class="eyebrow">CONVERSATION</p>
+        <h1>{{ current.title || 'Untitled conversation' }}</h1>
+      </div>
+      @if (current.agent?.name; as agentName) {
+        <span class="agent-label">{{ agentName }}</span>
+      }
+    </header>
+
+    <div #messageList class="messages" role="log" aria-label="Message history" aria-live="polite">
+      @if (messages().length === 0) {
+        <div class="empty-thread">
+          <span class="empty-icon" aria-hidden="true">✦</span>
+          <h2>What would you like to work on?</h2>
+          <p>Send a message to begin. Your conversation will be saved here.</p>
+        </div>
+      } @else {
+        @for (message of messages(); track message.id) {
+          <article class="message" [class.user-message]="message.role === 'USER'">
+            <div
+              class="message-avatar"
+              [class.assistant-avatar]="message.role !== 'USER'"
+              aria-hidden="true"
+            >
+              {{ message.role === 'USER' ? 'Y' : '✦' }}
+            </div>
+            <div class="message-content">
+              <div class="message-meta">
+                <strong>{{ message.role === 'USER' ? 'You' : 'Assistant' }}</strong>
+                <time [attr.datetime]="message.createdAt">
+                  {{ message.createdAt | date: 'shortTime' }}
+                </time>
+              </div>
+              <p>{{ message.content }}</p>
+            </div>
+          </article>
+        }
+      }
+      @if (isSending()) {
+        <div class="thinking" role="status">
+          <span class="thinking-dot"></span>
+          <span class="thinking-dot"></span>
+          <span class="thinking-dot"></span>
+          <span>Assistant is thinking</span>
+        </div>
+      }
+    </div>
+
+    <div class="composer-area">
+      @if (errorMessage(); as error) {
+        <div class="chat-error" role="alert">{{ error }}</div>
+      }
+      <form class="composer" [formGroup]="form" (ngSubmit)="submit()">
+        <label class="visually-hidden" for="message">Message the assistant</label>
+        <textarea
+          id="message"
+          rows="3"
+          maxlength="4000"
+          formControlName="content"
+          placeholder="Message your assistant…"
+          [attr.aria-invalid]="form.controls.content.touched && form.controls.content.invalid"
+          [attr.aria-describedby]="
+            form.controls.content.touched && form.controls.content.invalid ? 'message-error' : null
+          "
+          [disabled]="isSending()"
+        ></textarea>
+        @if (form.controls.content.touched && form.controls.content.invalid) {
+          <span class="field-error" id="message-error">
+            Enter a message with non-whitespace content, up to 4,000 characters.
+          </span>
+        }
+        <div class="composer-footer">
+          <span>{{ form.controls.content.value.length }} / 4000</span>
+          <button type="submit" [disabled]="isSending() || !form.controls.content.value.trim()">
+            {{ isSending() ? 'Sending…' : 'Send message' }}
+            @if (!isSending()) {
+              <span aria-hidden="true">↑</span>
+            }
+          </button>
+        </div>
+      </form>
+      <p class="disclaimer">AI can make mistakes. Review important information.</p>
+    </div>
+  } @else {
+    <div class="state-message error-state" role="alert">
+      <span>{{ errorMessage() || 'Conversation is not available.' }}</span>
+      <a routerLink="/app">Return to workspace</a>
+    </div>
+  }
+</section>

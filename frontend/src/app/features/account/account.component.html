@@ -1,0 +1,40 @@
+<main class="account-page">
+  <header class="page-heading">
+    <p class="eyebrow">WORKSPACE</p>
+    <h1>Account</h1>
+    <p>Your signed-in account details.</p>
+  </header>
+
+  @if (user(); as account) {
+    <section class="account-card" aria-label="Account information">
+      <div class="profile-heading">
+        <span class="profile-avatar" aria-hidden="true">
+          {{ (account.firstName || account.email).slice(0, 1).toUpperCase() }}
+        </span>
+        <div>
+          <h2>
+            @if (account.firstName || account.lastName) {
+              {{ account.firstName || '' }} {{ account.lastName || '' }}
+            } @else {
+              {{ account.email }}
+            }
+          </h2>
+          <span class="role-badge">{{ account.role }}</span>
+        </div>
+      </div>
+      <dl>
+        <div>
+          <dt>Email address</dt>
+          <dd>{{ account.email }}</dd>
+        </div>
+        <div>
+          <dt>Account ID</dt>
+          <dd>{{ account.id }}</dd>
+        </div>
+      </dl>
+      <p class="read-only-note">
+        Profile editing and password changes are not currently available in the backend.
+      </p>
+    </section>
+  }
+</main>

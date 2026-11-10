@@ -1,0 +1,79 @@
+<div class="workspace">
+  <aside class="sidebar" aria-label="Workspace navigation">
+    <a class="brand" routerLink="/app" aria-label="Northstar AI workspace">
+      <span class="brand-mark" aria-hidden="true">A</span>
+      <span>AI Business <span class="brand-light">Platform</span></span>
+    </a>
+
+    <button class="new-chat" type="button" (click)="startConversation()" [disabled]="isCreating()">
+      <span class="plus" aria-hidden="true">+</span>
+      {{ isCreating() ? 'Creating…' : 'New conversation' }}
+    </button>
+    @if (createError(); as error) {
+      <p class="sidebar-error" role="alert">{{ error }}</p>
+    }
+
+    <div class="section-heading">
+      <span>YOUR HISTORY</span>
+      <span class="history-count">{{ conversations.conversations().length }}</span>
+    </div>
+    @if (conversations.isLoading() && conversations.conversations().length === 0) {
+      <p class="sidebar-status">Loading conversations…</p>
+    } @else if (conversations.error(); as error) {
+      <div class="sidebar-error" role="alert">
+        <p>{{ error }}</p>
+        <button type="button" class="retry-button" (click)="conversations.refresh()">
+          Try again
+        </button>
+      </div>
+    } @else if (conversations.conversations().length === 0) {
+      <p class="sidebar-status">Your conversations will appear here.</p>
+    } @else {
+      <nav class="conversation-list" aria-label="Recent conversations">
+        @for (conversation of conversations.conversations(); track conversation.id) {
+          <a
+            class="conversation-link"
+            [routerLink]="['/app/chat', conversation.id]"
+            routerLinkActive="active"
+            ariaCurrentWhenActive="page"
+          >
+            <span class="conversation-title">{{
+              conversation.title || 'Untitled conversation'
+            }}</span>
+            <span class="conversation-date">{{ conversation.updatedAt | date: 'MMM d' }}</span>
+          </a>
+        }
+      </nav>
+    }
+
+    <div class="sidebar-bottom">
+      <a
+        class="account-link"
+        routerLink="/app/account"
+        routerLinkActive="active"
+        ariaCurrentWhenActive="page"
+      >
+        <span class="avatar" aria-hidden="true">{{ displayName().slice(0, 1).toUpperCase() }}</span>
+        <span class="account-copy">
+          <strong>{{ displayName() }}</strong>
+          <span>Account</span>
+        </span>
+        <span class="chevron" aria-hidden="true">›</span>
+      </a>
+      <button class="sign-out" type="button" (click)="signOut()">Sign out</button>
+    </div>
+  </aside>
+
+  <main class="main-panel">
+    <header class="topbar">
+      <div class="workspace-label">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span>PRIVATE WORKSPACE</span>
+      </div>
+      <span class="topbar-user">{{ displayName() }}</span>
+    </header>
+    <section class="page-content" aria-label="Workspace content">
+      <router-outlet />
+    </section>
+  </main>
+</div>

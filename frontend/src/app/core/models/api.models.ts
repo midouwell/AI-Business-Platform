@@ -53,3 +53,68 @@ export interface OneOffChatResponse {
   model: string;
   response: string;
 }
+
+export interface KnowledgeBase {
+  id: string;
+  name: string;
+  description: string | null;
+  ownerUserId: string;
+  documents?: Array<{ id: string; status: string }>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface KnowledgeBaseWithDocuments extends KnowledgeBase {
+  documents: DocumentSummary[];
+}
+
+export interface DocumentSummary {
+  id: string;
+  knowledgeBaseId: string;
+  uploadedByUserId: string;
+  originalFileName: string;
+  storedFilePath: string;
+  mimeType: string | null;
+  fileSizeBytes: number;
+  status: 'PENDING' | 'PROCESSING' | 'READY' | 'FAILED' | 'DELETED';
+  extractedText: string | null;
+  errorMessage: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface KnowledgeSearchResult {
+  id: string;
+  documentId: string;
+  documentName: string;
+  chunkIndex: number;
+  content: string;
+  similarityScore: number;
+  metadata: Record<string, unknown> | null;
+}
+
+export interface AssistantSource {
+  documentId: string;
+  documentName: string;
+  chunkId: string;
+  chunkIndex: number;
+  similarityScore: number;
+  content: string;
+  metadata?: Record<string, unknown> | null;
+}
+
+export interface KnowledgeBaseChatRequest {
+  question: string;
+  topK?: number;
+  threshold?: number;
+}
+
+export interface KnowledgeBaseChatResponse {
+  answer: string;
+  sources: AssistantSource[];
+}
+
+export interface UpdateKnowledgeBaseRequest {
+  name: string;
+  description?: string | null;
+}

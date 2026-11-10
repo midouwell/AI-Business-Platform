@@ -9,15 +9,20 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { ConversationStore } from '../../core/services/conversation-store.service';
 import { getApiErrorMessage } from '../../core/errors/api-error';
-import { Conversation, ConversationMessage } from '../../core/models/api.models';
+import {
+  Conversation,
+  ConversationMessage,
+  KnowledgeBase,
+  KnowledgeBaseChatResponse,
+} from '../../core/models/api.models';
 
 @Component({
-  imports: [DatePipe, ReactiveFormsModule, RouterLink],
+  imports: [DatePipe, FormsModule, ReactiveFormsModule, RouterLink],
   selector: 'app-chat',
   templateUrl: './chat.component.html',
   styleUrl: './chat.component.scss',
@@ -35,13 +40,23 @@ export class ChatComponent implements AfterViewChecked {
   readonly messages = signal<ConversationMessage[]>([]);
   readonly isLoading = signal(true);
   readonly isSending = signal(false);
+  readonly isAskingKnowledgeBase = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  readonly knowledgeBases = signal<KnowledgeBase[]>([]);
+  readonly selectedKnowledgeBaseId = signal<string | null>(null);
+  readonly ragResponse = signal<KnowledgeBaseChatResponse | null>(null);
+  readonly ragErrorMessage = signal<string | null>(null);
   readonly form = this.formBuilder.nonNullable.group({
     content: ['', [Validators.required, Validators.maxLength(4000), Validators.pattern(/\S/)]],
+  });
+  readonly ragForm = this.formBuilder.nonNullable.group({
+    question: ['', [Validators.required, Validators.maxLength(2000), Validators.pattern(/\S/)]],
   });
   private shouldScrollToBottom = false;
 
   constructor() {
+    this.loadKnowledgeBases();
+
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       const id = params.get('conversationId');
       if (id) {
@@ -93,6 +108,57 @@ export class ChatComponent implements AfterViewChecked {
         error: (error: unknown) => {
           this.errorMessage.set(getApiErrorMessage(error));
           this.isSending.set(false);
+        },
+      });
+  }
+
+  askSelectedKnowledgeBase(): void {
+    const selectedKnowledgeBaseId = this.selectedKnowledgeBaseId();
+    if (!selectedKnowledgeBaseId || this.ragForm.invalid || this.isAskingKnowledgeBase()) {
+      this.ragForm.markAllAsTouched();
+      return;
+    }
+
+    const question = this.ragForm.controls.question.value.trim();
+    if (!question) {
+      return;
+    }
+
+    this.ragErrorMessage.set(null);
+    this.isAskingKnowledgeBase.set(true);
+    this.api
+      .askKnowledgeBaseQuestion(selectedKnowledgeBaseId, {
+        question,
+        topK: 5,
+        threshold: 0.2,
+      })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (result) => {
+          this.ragResponse.set(result);
+          this.ragForm.reset();
+          this.isAskingKnowledgeBase.set(false);
+        },
+        error: (error: unknown) => {
+          this.ragErrorMessage.set(getApiErrorMessage(error));
+          this.isAskingKnowledgeBase.set(false);
+        },
+      });
+  }
+
+  private loadKnowledgeBases(): void {
+    this.api
+      .listKnowledgeBases()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (knowledgeBases) => {
+          this.knowledgeBases.set(knowledgeBases);
+          if (knowledgeBases.length > 0 && !this.selectedKnowledgeBaseId()) {
+            this.selectedKnowledgeBaseId.set(knowledgeBases[0].id);
+          }
+        },
+        error: () => {
+          this.knowledgeBases.set([]);
         },
       });
   }

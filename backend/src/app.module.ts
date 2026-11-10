@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module.js';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from './auth/guards/roles.guard.js';
+import { KnowledgeBaseModule } from './knowledge-base/knowledge-base.module.js';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { RolesGuard } from './auth/guards/roles.guard.js';
     PrismaModule,
     ConversationsModule,
     AuthModule,
+    KnowledgeBaseModule,
   ],
   controllers: [AppController],
   providers: [

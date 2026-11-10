@@ -25,6 +25,14 @@ enum UserRole {
   ADMIN
 }
 
+enum DocumentStatus {
+  PENDING
+  PROCESSING
+  READY
+  FAILED
+  DELETED
+}
+
 model User {
   id           String         @id @default(uuid()) @db.Uuid
   email        String         @unique
@@ -36,6 +44,8 @@ model User {
   isActive     Boolean        @default(true)
   conversations Conversation[]
   refreshTokens RefreshToken[]
+  knowledgeBases KnowledgeBase[]
+  documents Document[]
 
   createdAt    DateTime       @default(now()) @db.Timestamptz(6)
   updatedAt    DateTime       @updatedAt @db.Timestamptz(6)
@@ -69,6 +79,61 @@ model Agent {
 
   createdAt     DateTime       @default(now()) @db.Timestamptz(6)
   updatedAt     DateTime       @updatedAt @db.Timestamptz(6)
+}
+
+model KnowledgeBase {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String
+  description String?
+  ownerUserId String    @db.Uuid
+  owner       User      @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+
+  documents   Document[]
+
+  createdAt   DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @db.Timestamptz(6)
+
+  @@index([ownerUserId])
+}
+
+model Document {
+  id                String        @id @default(uuid()) @db.Uuid
+  knowledgeBaseId   String        @db.Uuid
+  knowledgeBase     KnowledgeBase @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  uploadedByUserId  String        @db.Uuid
+  uploadedBy        User          @relation(fields: [uploadedByUserId], references: [id], onDelete: Cascade)
+
+  originalFileName  String
+  storedFilePath    String
+  mimeType          String?
+  fileSizeBytes     Int
+  status            DocumentStatus @default(PENDING)
+  extractedText     String?
+  errorMessage      String?
+
+  chunks            DocumentChunk[]
+
+  createdAt         DateTime      @default(now()) @db.Timestamptz(6)
+  updatedAt         DateTime      @updatedAt @db.Timestamptz(6)
+
+  @@index([knowledgeBaseId, status])
+  @@index([uploadedByUserId])
+}
+
+model DocumentChunk {
+  id          String    @id @default(uuid()) @db.Uuid
+  documentId  String    @db.Uuid
+  document    Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  chunkIndex  Int
+  content     String
+  metadata    Json?
+  embedding   Unsupported("vector(768)")
+
+  createdAt   DateTime  @default(now()) @db.Timestamptz(6)
+
+  @@unique([documentId, chunkIndex])
+  @@index([documentId])
 }
 
 model Conversation {

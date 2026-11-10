@@ -1,0 +1,163 @@
+<section class="knowledge-base-page">
+  <aside class="sidebar" aria-label="Knowledge base navigation">
+    <div class="panel-header">
+      <h2>Knowledge Base</h2>
+    </div>
+
+    <form class="create-form" [formGroup]="createForm" (ngSubmit)="createKnowledgeBase()">
+      <label class="field-label" for="knowledge-base-name">New knowledge base</label>
+      <input
+        id="knowledge-base-name"
+        type="text"
+        formControlName="name"
+        placeholder="Name"
+        maxlength="200"
+      />
+      <textarea
+        rows="3"
+        formControlName="description"
+        placeholder="Optional description"
+        maxlength="2000"
+      ></textarea>
+      <button type="submit" [disabled]="isCreating() || createForm.invalid">
+        {{ isCreating() ? 'Creating…' : 'Create knowledge base' }}
+      </button>
+    </form>
+
+    @if (knowledgeBases().length === 0) {
+      <p class="empty-state">No knowledge bases yet.</p>
+    } @else {
+      <ul class="knowledge-base-list" aria-label="Knowledge base list">
+        @for (knowledgeBase of knowledgeBases(); track knowledgeBase.id) {
+          <li>
+            <button
+              type="button"
+              class="knowledge-base-item"
+              [class.active]="selectedKnowledgeBase()?.id === knowledgeBase.id"
+              (click)="selectKnowledgeBase(knowledgeBase.id)"
+            >
+              <span class="knowledge-base-name">{{ knowledgeBase.name }}</span>
+              <span class="knowledge-base-meta">
+                {{ knowledgeBase.documents?.length ?? 0 }} documents
+              </span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </aside>
+
+  <main class="detail-panel">
+    @if (errorMessage(); as error) {
+      <div class="error-banner" role="alert">{{ error }}</div>
+    }
+
+    @if (isLoading()) {
+      <div class="state-message" role="status">Loading knowledge base…</div>
+    } @else if (!selectedKnowledgeBase()) {
+      <div class="state-message">Select or create a knowledge base to get started.</div>
+    } @else {
+      <header class="header-bar">
+        <div>
+          <p class="eyebrow">KNOWLEDGE BASE</p>
+          <h1>{{ selectedKnowledgeBase()?.name }}</h1>
+        </div>
+        <button type="button" class="danger-button" (click)="deleteSelectedKnowledgeBase()">
+          Delete knowledge base
+        </button>
+      </header>
+
+      <form class="edit-form" [formGroup]="editForm" (ngSubmit)="updateSelectedKnowledgeBase()">
+        <div class="field-group">
+          <label for="knowledge-base-title">Name</label>
+          <input id="knowledge-base-title" type="text" formControlName="name" />
+        </div>
+        <div class="field-group">
+          <label for="knowledge-base-description">Description</label>
+          <textarea id="knowledge-base-description" rows="4" formControlName="description"></textarea>
+        </div>
+        <button type="submit" class="primary-button" [disabled]="isSaving() || editForm.invalid">
+          {{ isSaving() ? 'Saving…' : 'Save changes' }}
+        </button>
+      </form>
+
+      <section class="panel">
+        <div class="panel-header-row">
+          <h3>Upload documents</h3>
+        </div>
+        <div class="upload-row">
+          <input
+            type="file"
+            accept=".pdf,.docx,.txt,.md"
+            (change)="onFileSelected($event)"
+            aria-label="Upload document"
+          />
+          <button
+            type="button"
+            class="primary-button"
+            [disabled]="isUploading() || !uploadForm.controls.file.value"
+            (click)="uploadDocument()"
+          >
+            {{ isUploading() ? 'Uploading…' : 'Upload document' }}
+          </button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header-row">
+          <h3>Documents</h3>
+        </div>
+
+        @if ((selectedKnowledgeBase()?.documents ?? []).length === 0) {
+          <p class="empty-state">No documents uploaded yet.</p>
+        } @else {
+          <div class="document-grid">
+            @for (
+              document of selectedKnowledgeBase()?.documents ?? [];
+              track document.id
+            ) {
+              <article class="document-card">
+                <div class="document-topline">
+                  <h4>{{ document.originalFileName }}</h4>
+                  <span class="status-pill" [class]="document.status.toLowerCase()">
+                    {{ statusLabel(document.status) }}
+                  </span>
+                </div>
+
+                <dl class="document-meta">
+                  <div>
+                    <dt>Type</dt>
+                    <dd>{{ document.mimeType || 'Unknown' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Size</dt>
+                    <dd>{{ document.fileSizeBytes | number }} bytes</dd>
+                  </div>
+                  <div>
+                    <dt>Updated</dt>
+                    <dd>{{ document.updatedAt | date: 'medium' }}</dd>
+                  </div>
+                </dl>
+
+                @if (document.errorMessage) {
+                  <p class="document-error">{{ document.errorMessage }}</p>
+                }
+
+                <div class="document-actions">
+                  @if (document.status === 'FAILED') {
+                    <button type="button" class="secondary-button" (click)="retryDocument(document.id)">
+                      Retry processing
+                    </button>
+                  }
+                  <button type="button" class="ghost-button" (click)="deleteDocument(document.id)">
+                    Delete
+                  </button>
+                </div>
+              </article>
+            }
+          </div>
+        }
+      </section>
+    }
+  </main>
+</section>

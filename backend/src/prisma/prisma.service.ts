@@ -1,5 +1,7 @@
 
-import "dotenv/config";
+import { config } from "dotenv";
+
+config({ path: ["backend/.env", ".env"] });
 
 import {
   Injectable,
@@ -19,7 +21,9 @@ export class PrismaService
     const connectionString = process.env.DATABASE_URL;
 
     if (!connectionString) {
-      throw new Error("DATABASE_URL is not configured");
+      throw new Error(
+        'DATABASE_URL is not configured. Copy backend/.env.example to backend/.env and set DATABASE_URL to your PostgreSQL connection string.',
+      );
     }
 
     const adapter = new PrismaPg({ connectionString });

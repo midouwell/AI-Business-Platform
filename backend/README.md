@@ -31,6 +31,28 @@
 $ npm install
 ```
 
+Copy `.env.example` to `.env` in PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Before starting the API:
+
+1. Start a PostgreSQL server and set `DATABASE_URL` in `backend/.env` to its
+   connection string.
+2. Set `JWT_ACCESS_SECRET` to a secure random value. For example, in PowerShell:
+   `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`
+3. Apply the database migrations:
+
+   ```bash
+   npx prisma migrate deploy
+   ```
+
+The Prisma client is generated automatically by the build and start scripts.
+Ollama is only needed for AI chat endpoints; its URL and model can be changed
+with `OLLAMA_BASE_URL` and `OLLAMA_CHAT_MODEL`.
+
 ## Compile and run the project
 
 ```bash

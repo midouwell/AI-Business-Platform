@@ -32,6 +32,7 @@ describe('ChatComponent', () => {
     const fixture = TestBed.createComponent(ChatComponent);
     fixture.detectChanges();
 
+    http.expectOne('/api/knowledge-bases').flush([]);
     http.expectOne('/api/conversations/conversation-id').flush({
       id: 'conversation-id',
       title: 'A conversation',
@@ -81,9 +82,60 @@ describe('ChatComponent', () => {
     http.expectOne('/api/conversations').flush([]);
   });
 
+  it('loads knowledge bases and sends the selected KB question to the backend', () => {
+    const fixture = TestBed.createComponent(ChatComponent);
+    fixture.detectChanges();
+
+    http.expectOne('/api/knowledge-bases').flush([
+      { id: 'kb-1', name: 'Operations guide', description: 'Policy docs', ownerUserId: 'user-id', createdAt: '2026-11-10T00:00:00.000Z', updatedAt: '2026-11-10T00:00:00.000Z' },
+    ]);
+    http.expectOne('/api/conversations/conversation-id').flush({
+      id: 'conversation-id',
+      title: 'A conversation',
+      userId: 'user-id',
+      agentId: null,
+      agent: null,
+      messages: [],
+      createdAt: '2026-11-10T00:00:00.000Z',
+      updatedAt: '2026-11-10T00:00:00.000Z',
+    });
+
+    const component = fixture.componentInstance;
+    component.selectedKnowledgeBaseId.set('kb-1');
+    component.ragForm.controls.question.setValue('What is the refund policy?');
+    component.askSelectedKnowledgeBase();
+
+    const request = http.expectOne('/api/knowledge-bases/kb-1/chat');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({
+      question: 'What is the refund policy?',
+      topK: 5,
+      threshold: 0.2,
+    });
+
+    request.flush({
+      answer: 'The refund policy is 30 days.',
+      sources: [
+        {
+          documentId: 'doc-1',
+          documentName: 'refund-policy.pdf',
+          chunkId: 'chunk-1',
+          chunkIndex: 0,
+          similarityScore: 0.91,
+          content: 'Refunds are available for 30 days after purchase.',
+          metadata: { pageNumber: 2 },
+        },
+      ],
+    });
+
+    expect(component.ragResponse()?.answer).toBe('The refund policy is 30 days.');
+    expect(component.ragResponse()?.sources[0].documentName).toBe('refund-policy.pdf');
+  });
+
   it('does not send an empty message', () => {
     const fixture = TestBed.createComponent(ChatComponent);
     fixture.detectChanges();
+    http.expectOne('/api/knowledge-bases').flush([]);
     http.expectOne('/api/conversations/conversation-id').flush({
       id: 'conversation-id',
       title: null,

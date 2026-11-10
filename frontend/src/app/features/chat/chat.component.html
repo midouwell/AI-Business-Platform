@@ -12,6 +12,65 @@
       }
     </header>
 
+    <div class="rag-panel" aria-label="Knowledge base question panel">
+      <div class="rag-toolbar">
+        <label for="knowledge-base-select">Knowledge base</label>
+        <select id="knowledge-base-select" [ngModel]="selectedKnowledgeBaseId()" (ngModelChange)="selectedKnowledgeBaseId.set($event)" name="selectedKnowledgeBaseId">
+          <option [ngValue]="null">No knowledge base selected</option>
+          @for (knowledgeBase of knowledgeBases(); track knowledgeBase.id) {
+            <option [ngValue]="knowledgeBase.id">{{ knowledgeBase.name }}</option>
+          }
+        </select>
+      </div>
+
+      <form class="rag-form" [formGroup]="ragForm" (ngSubmit)="askSelectedKnowledgeBase()">
+        <label class="visually-hidden" for="rag-question">Ask the selected knowledge base</label>
+        <textarea
+          id="rag-question"
+          rows="3"
+          formControlName="question"
+          placeholder="Ask a question about your selected knowledge base…"
+          [disabled]="isAskingKnowledgeBase()"
+        ></textarea>
+        <div class="rag-actions">
+          <button type="submit" [disabled]="isAskingKnowledgeBase() || !selectedKnowledgeBaseId() || ragForm.invalid">
+            {{ isAskingKnowledgeBase() ? 'Searching…' : 'Ask knowledge base' }}
+          </button>
+        </div>
+      </form>
+
+      @if (ragErrorMessage(); as ragError) {
+        <div class="chat-error" role="alert">{{ ragError }}</div>
+      }
+
+      @if (ragResponse(); as ragResult) {
+        <div class="rag-answer" aria-live="polite">
+          <h3>Answer</h3>
+          <p>{{ ragResult.answer }}</p>
+
+          @if (ragResult.sources.length > 0) {
+            <div class="source-list">
+              <h4>Sources</h4>
+              @for (source of ragResult.sources; track source.documentId + ':' + source.chunkIndex) {
+                @let pageNumber = source.metadata?.['pageNumber'] ?? source.metadata?.['page'];
+                <article class="source-item">
+                  <div class="source-header">
+                    <strong>{{ source.documentName }}</strong>
+                    @if (pageNumber !== null && pageNumber !== undefined) {
+                      <span>Page {{ pageNumber }}</span>
+                    }
+                  </div>
+                  <p>{{ source.content }}</p>
+                </article>
+              }
+            </div>
+          } @else {
+            <p class="source-empty">No source references were returned by the backend for this answer.</p>
+          }
+        </div>
+      }
+    </div>
+
     <div #messageList class="messages" role="log" aria-label="Message history" aria-live="polite">
       @if (messages().length === 0) {
         <div class="empty-thread">

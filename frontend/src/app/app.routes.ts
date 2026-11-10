@@ -34,6 +34,13 @@ export const routes: Routes = [
           import('./features/chat/chat.component').then((component) => component.ChatComponent),
       },
       {
+        path: 'knowledge-bases',
+        loadComponent: () =>
+          import('./features/knowledge-base/knowledge-base.component').then(
+            (component) => component.KnowledgeBaseComponent,
+          ),
+      },
+      {
         path: 'account',
         loadComponent: () =>
           import('./features/account/account.component').then(

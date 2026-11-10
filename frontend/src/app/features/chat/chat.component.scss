@@ -258,6 +258,130 @@ textarea::placeholder {
   opacity: 0.55;
 }
 
+.rag-panel {
+  display: grid;
+  gap: 0.75rem;
+  width: min(100% - 2rem, 790px);
+  margin: 1.2rem auto 0;
+  padding: 1rem 1rem 0.4rem;
+  border: 1px solid #dfe5eb;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 6px 25px rgb(34 56 79 / 6%);
+}
+
+.rag-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #49607b;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.rag-toolbar select {
+  flex: 1;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #dfe5eb;
+  border-radius: 8px;
+  background: #f7f9fb;
+  color: #263b52;
+  font: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.rag-form {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.rag-form textarea {
+  min-height: 88px;
+}
+
+.rag-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.rag-actions button {
+  display: inline-flex;
+  min-height: 2.15rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.42rem 0.8rem;
+  border: 0;
+  border-radius: 7px;
+  background: #173c64;
+  color: white;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.73rem;
+  font-weight: 650;
+}
+
+.rag-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.rag-answer {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.85rem 0.2rem 0.2rem;
+  border-top: 1px solid #edf1f5;
+}
+
+.rag-answer h3,
+.source-list h4 {
+  margin: 0;
+  color: #263b52;
+}
+
+.rag-answer p,
+.source-item p,
+.source-empty {
+  margin: 0;
+  color: #41576d;
+  font-size: 0.85rem;
+  line-height: 1.7;
+}
+
+.source-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.source-item {
+  padding: 0.8rem 0.9rem;
+  border: 1px solid #e4ebf2;
+  border-radius: 10px;
+  background: #f7fafd;
+}
+
+.source-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+  color: #173c64;
+  font-size: 0.75rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  white-space: nowrap;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+}
+
 .composer-footer button span {
   font-size: 1rem;
 }

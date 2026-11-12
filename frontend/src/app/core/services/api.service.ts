@@ -10,7 +10,9 @@ import {
   KnowledgeBaseWithDocuments,
   KnowledgeSearchResult,
   OneOffChatResponse,
+  SpeechTranscriptionResponse,
   SendMessageResponse,
+  SpeechVoice,
   UpdateKnowledgeBaseRequest,
 } from '../models/api.models';
 
@@ -36,6 +38,49 @@ export class ApiService {
     return this.http.post<SendMessageResponse>(
       `${API_BASE}/conversations/${encodeURIComponent(conversationId)}/messages`,
       { content },
+    );
+  }
+
+  transcribeAudio(
+    audio: Blob,
+    filename: string,
+    language?: string,
+  ): Observable<SpeechTranscriptionResponse> {
+    const formData = new FormData();
+    formData.append('file', audio, filename);
+    if (language) {
+      formData.append('language', language);
+    }
+
+    return this.http.post<SpeechTranscriptionResponse>(
+      `${API_BASE}/speech/transcriptions`,
+      formData,
+    );
+  }
+
+  listSpeechVoices(): Observable<SpeechVoice[]> {
+    return this.http.get<SpeechVoice[]>(`${API_BASE}/speech/voices`);
+  }
+
+  synthesizeSpeech(
+    text: string,
+    voiceId?: string,
+    language?: string,
+  ): Observable<Blob> {
+    const payload: { text: string; voiceId?: string; language?: string } = {
+      text,
+    };
+    if (voiceId) {
+      payload.voiceId = voiceId;
+    }
+    if (language) {
+      payload.language = language;
+    }
+
+    return this.http.post(
+      `${API_BASE}/speech/synthesis`,
+      payload,
+      { responseType: 'blob' },
     );
   }
 

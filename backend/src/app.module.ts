@@ -10,6 +10,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from './auth/guards/roles.guard.js';
 import { KnowledgeBaseModule } from './knowledge-base/knowledge-base.module.js';
+import { SpeechModule } from './speech/speech.module.js';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { KnowledgeBaseModule } from './knowledge-base/knowledge-base.module.js';
     ConversationsModule,
     AuthModule,
     KnowledgeBaseModule,
+    SpeechModule,
   ],
   controllers: [AppController],
   providers: [

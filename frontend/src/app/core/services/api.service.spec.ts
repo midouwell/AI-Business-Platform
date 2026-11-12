@@ -69,4 +69,56 @@ describe('ApiService', () => {
     expect(request.request.body).toEqual({ content: 'Hello' });
     request.flush(response);
   });
+
+  it('uploads recorded audio to the local transcription endpoint', () => {
+    const audio = new Blob(['audio-data'], { type: 'audio/webm' });
+
+    api.transcribeAudio(audio, 'voice-message.webm', 'en').subscribe((response) => {
+      expect(response).toEqual({ text: 'recognized words' });
+    });
+
+    const request = http.expectOne('/api/speech/transcriptions');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toBeInstanceOf(FormData);
+    expect(request.request.body.get('language')).toBe('en');
+    expect(request.request.body.get('file')).toBeInstanceOf(File);
+    request.flush({ text: 'recognized words' });
+  });
+
+  it('lists configured local speech voices', () => {
+    const voices = [
+      {
+        id: 'en_US-lessac-medium',
+        language: 'en-US',
+        label: 'en US lessac medium',
+        isDefault: true,
+      },
+    ];
+
+    api.listSpeechVoices().subscribe((result) => {
+      expect(result).toEqual(voices);
+    });
+
+    const request = http.expectOne('/api/speech/voices');
+    expect(request.request.method).toBe('GET');
+    request.flush(voices);
+  });
+
+  it('requests spoken audio as a binary WAV response', () => {
+    const audio = new Blob(['RIFF'], { type: 'audio/wav' });
+
+    api.synthesizeSpeech('Hello there', 'en_US-lessac-medium', 'en-US').subscribe((result) => {
+      expect(result).toEqual(audio);
+    });
+
+    const request = http.expectOne('/api/speech/synthesis');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({
+      text: 'Hello there',
+      voiceId: 'en_US-lessac-medium',
+      language: 'en-US',
+    });
+    expect(request.request.responseType).toBe('blob');
+    request.flush(audio);
+  });
 });

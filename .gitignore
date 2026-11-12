@@ -21,3 +21,6 @@ frontend/.angular/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Local Claude Code configuration
+/backend/.claude/

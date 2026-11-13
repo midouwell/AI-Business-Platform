@@ -147,6 +147,38 @@
   white-space: pre-wrap;
 }
 
+.audio-controls {
+  display: flex;
+  gap: 0.45rem;
+  margin-top: 0.55rem;
+}
+
+.audio-controls button {
+  min-height: 1.8rem;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid #dfe5eb;
+  border-radius: 6px;
+  background: #f7f9fb;
+  color: #173c64;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 650;
+}
+
+.audio-controls button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.audio-controls .secondary-audio-button {
+  color: #5c6e83;
+}
+
+.audio-playback {
+  display: none;
+}
+
 .user-message .message-content p {
   color: #475b70;
 }
@@ -201,6 +233,90 @@
 .composer:focus-within {
   border-color: #9ab2c9;
   box-shadow: 0 0 0 3px rgb(71 119 159 / 11%);
+}
+
+.voice-controls {
+  display: flex;
+  min-height: 2rem;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.55rem;
+}
+
+.voice-settings {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.6rem 0.8rem;
+  margin-bottom: 0.6rem;
+}
+
+.voice-settings label {
+  display: grid;
+  gap: 0.25rem;
+  color: #5c6e83;
+  font-size: 0.66rem;
+}
+
+.voice-settings select {
+  min-width: 7rem;
+  max-width: 12rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid #dfe5eb;
+  border-radius: 6px;
+  background: #f7f9fb;
+  color: #263b52;
+  font: inherit;
+  font-size: 0.7rem;
+}
+
+.voice-settings select:disabled {
+  opacity: 0.6;
+}
+
+.voice-settings .autoplay-setting {
+  display: flex;
+  min-height: 2rem;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.autoplay-setting input {
+  accent-color: #173c64;
+}
+
+.voice-button {
+  min-height: 2rem;
+  padding: 0.38rem 0.65rem;
+  border: 1px solid #dfe5eb;
+  border-radius: 7px;
+  background: #f7f9fb;
+  color: #173c64;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+
+.voice-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.stop-recording {
+  border-color: #efcaca;
+  background: #fff6f6;
+  color: #8d282e;
+}
+
+.voice-status,
+.transcription-hint {
+  color: #5c6e83;
+  font-size: 0.7rem;
+}
+
+.transcription-hint {
+  margin: 0.4rem 0;
 }
 
 textarea {

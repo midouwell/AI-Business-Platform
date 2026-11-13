@@ -96,6 +96,30 @@
                 </time>
               </div>
               <p>{{ message.content }}</p>
+              @if (message.role === 'ASSISTANT') {
+                <div class="audio-controls" aria-label="Assistant response audio controls">
+                  @if (audioLoadingMessageId() === message.id) {
+                    <button type="button" disabled>Generating audio…</button>
+                  } @else if (activeAudioMessageId() === message.id && isAudioPlaying()) {
+                    <button type="button" (click)="pauseResponse()">Pause</button>
+                  } @else {
+                    <button type="button" (click)="playResponse(message)">
+                      @if (activeAudioMessageId() === message.id && isAudioPaused()) {
+                        Resume response
+                      } @else if (activeAudioMessageId() === message.id) {
+                        Replay response
+                      } @else {
+                        Play response
+                      }
+                    </button>
+                  }
+                  @if (activeAudioMessageId() === message.id) {
+                    <button type="button" class="secondary-audio-button" (click)="stopResponse()">
+                      Stop
+                    </button>
+                  }
+                </div>
+              }
             </div>
           </article>
         }
@@ -109,12 +133,90 @@
         </div>
       }
     </div>
+    <audio
+      #responseAudio
+      class="audio-playback"
+      aria-hidden="true"
+      (play)="onAudioPlay()"
+      (pause)="onAudioPause()"
+      (ended)="onAudioEnded()"
+      (error)="onAudioError()"
+    ></audio>
 
     <div class="composer-area">
       @if (errorMessage(); as error) {
         <div class="chat-error" role="alert">{{ error }}</div>
       }
       <form class="composer" [formGroup]="form" (ngSubmit)="submit()">
+        <div class="voice-controls">
+          @if (isRecording()) {
+            <button type="button" class="voice-button stop-recording" (click)="stopRecording()">
+              Stop recording
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="voice-button"
+              [disabled]="isTranscribing() || isSending()"
+              (click)="startRecording()"
+            >
+              {{ isTranscribing() ? 'Transcribing…' : 'Record voice message' }}
+            </button>
+          }
+        </div>
+        <div class="voice-settings" aria-label="Speech settings">
+          <label>
+            Language
+            <select
+              name="speechLanguage"
+              [ngModel]="selectedSpeechLanguage()"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="setSpeechLanguage($event)"
+              [disabled]="availableSpeechLanguages().length === 0"
+            >
+              @for (language of availableSpeechLanguages(); track language) {
+                <option [ngValue]="language">{{ language }}</option>
+              }
+            </select>
+          </label>
+          <label>
+            Voice
+            <select
+              name="speechVoice"
+              [ngModel]="selectedSpeechVoiceId()"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="setSpeechVoice($event)"
+              [disabled]="availableSpeechVoices().length === 0"
+            >
+              @for (voice of availableSpeechVoices(); track voice.id) {
+                <option [ngValue]="voice.id">{{ voice.label }}</option>
+              }
+            </select>
+          </label>
+          <label class="autoplay-setting">
+            <input
+              type="checkbox"
+              name="autoPlayResponses"
+              [ngModel]="autoPlayResponses()"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="setAutoPlayResponses($event)"
+              [disabled]="speechVoices().length === 0"
+            />
+            Speak replies automatically
+          </label>
+        </div>
+        @if (speechSettingsError(); as settingsError) {
+          <div class="chat-error" role="alert">{{ settingsError }}</div>
+        }
+        @if (voiceStatus(); as status) {
+          <span class="voice-status" role="status">{{ status }}</span>
+        }
+        @if (voiceErrorMessage(); as voiceError) {
+          <div class="chat-error" role="alert">{{ voiceError }}</div>
+        }
+        @if (audioErrorMessage(); as audioError) {
+          <div class="chat-error" role="alert">{{ audioError }}</div>
+        }
         <label class="visually-hidden" for="message">Message the assistant</label>
         <textarea
           id="message"
@@ -128,6 +230,9 @@
           "
           [disabled]="isSending()"
         ></textarea>
+        @if (form.controls.content.value && voiceStatus()?.startsWith('Transcription ready')) {
+          <p class="transcription-hint">Review or edit the recognized text before sending.</p>
+        }
         @if (form.controls.content.touched && form.controls.content.invalid) {
           <span class="field-error" id="message-error">
             Enter a message with non-whitespace content, up to 4,000 characters.

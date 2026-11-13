@@ -49,6 +49,17 @@ export interface SendMessageResponse {
   assistantMessage: ConversationMessage;
 }
 
+export interface SpeechTranscriptionResponse {
+  text: string;
+}
+
+export interface SpeechVoice {
+  id: string;
+  language: string;
+  label: string;
+  isDefault: boolean;
+}
+
 export interface OneOffChatResponse {
   model: string;
   response: string;

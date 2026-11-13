@@ -21,3 +21,12 @@ frontend/.angular/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Local Claude Code configuration
+/backend/.claude/
+
+# Local Claude Code configuration
+/backend/.windsurf/
+
+# Local Claude Code configuration
+/frontend/.codex/
